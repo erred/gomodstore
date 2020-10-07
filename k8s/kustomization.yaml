@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonLabels:
+  app.kubernetes.io/name: gomodstore
+  app.kubernetes.io/managed-by: kustomize
+namespace: apps
+resources:
+  - deployment.k8s.yaml
+  - volume.k8s.yaml
+images:
+  - name: us.gcr.io/com-seankhliao/gomodstore
+    newName: reg.seankhliao.com/gomodstore
+    # newTag: IMAGE_TAG
