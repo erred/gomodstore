@@ -172,7 +172,7 @@ func download(ctx context.Context, s *Store, ir IndexRecord, counters *Counters)
 		return
 	}
 	br := bytes.NewReader(b)
-	zr, err := zip.NewReader(br, 1<<30)
+	zr, err := zip.NewReader(br, int64(len(b)))
 	if err != nil {
 		log.Println("zipreader ", zipURL, err)
 		return
@@ -194,7 +194,7 @@ func download(ctx context.Context, s *Store, ir IndexRecord, counters *Counters)
 			log.Println("read zipfile ", zipURL, zf.Name, err)
 			continue
 		}
-		err = s.Add(counters, ir.Path, ir.Version, zf.Name, b)
+		err = s.Add(counters, zf.Name, b)
 		if err != nil {
 			log.Println("write zipfile ", zipURL, zf.Name, err)
 			continue

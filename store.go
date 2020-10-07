@@ -24,7 +24,7 @@ func NewStore(baseDir string) *Store {
 	return s
 }
 
-func (s *Store) Add(counters *Counters, module, version, rfpath string, b []byte) error {
+func (s *Store) Add(counters *Counters, rfpath string, b []byte) error {
 	sum := sha256.Sum256(b)
 	cspath := filepath.Join(s.content, string(sum[:]))
 
@@ -41,7 +41,7 @@ func (s *Store) Add(counters *Counters, module, version, rfpath string, b []byte
 		atomic.AddUint64(&counters.bytesDeduped, uint64(len(b)))
 	}
 
-	fpath := filepath.Join(s.mod, fmt.Sprintf("%s@%s", module, version), rfpath)
+	fpath := filepath.Join(s.mod, rfpath)
 
 	os.MkdirAll(filepath.Dir(fpath), 0o755)
 	err = os.Link(cspath, fpath)
