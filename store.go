@@ -32,12 +32,12 @@ func (s *Store) Add(counters *Counters, rfpath string, b []byte) error {
 	os.MkdirAll(filepath.Dir(cspath), 0o755)
 	f, err := os.Create(cspath)
 	if err != nil && !errors.Is(err, os.ErrExist) {
-		return fmt.Errorf("store.Add create content store %s: %w", cspath, err)
+		return fmt.Errorf("store.Add create %s: %w", cspath, err)
 	} else if err == nil {
 		defer f.Close()
 		_, err := f.Write(b)
 		if err != nil {
-			return fmt.Errorf("store.Add content store %s: %w", cspath, err)
+			return fmt.Errorf("store.Add write %s: %w", cspath, err)
 		}
 		atomic.AddUint64(&counters.bytesDeduped, uint64(len(b)))
 	}
@@ -45,9 +45,11 @@ func (s *Store) Add(counters *Counters, rfpath string, b []byte) error {
 	fpath := filepath.Join(s.mod, rfpath)
 
 	os.MkdirAll(filepath.Dir(fpath), 0o755)
+	os.Remove(fpath)
 	err = os.Link(cspath, fpath)
 	if err != nil {
-		return fmt.Errorf("store.Add link %s -> %s: %w", fpath, cspath, err)
+		return fmt.Errorf("store.Add: %w", err)
+
 	}
 	return nil
 }
