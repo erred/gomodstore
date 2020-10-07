@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -26,7 +27,7 @@ func NewStore(baseDir string) *Store {
 
 func (s *Store) Add(counters *Counters, rfpath string, b []byte) error {
 	sum := sha256.Sum256(b)
-	cspath := filepath.Join(s.content, string(sum[:]))
+	cspath := filepath.Join(s.content, hex.EncodeToString(sum[:]))
 
 	os.MkdirAll(filepath.Dir(cspath), 0o755)
 	f, err := os.Create(cspath)
