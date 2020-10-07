@@ -63,9 +63,10 @@ func main() {
 	}()
 
 	var counters Counters
+	log.Println("starting...")
 	go func() {
 		for range time.NewTicker(time.Minute).C {
-			fmt.Printf("progress: modules=%d err410=%d errOther=%d uncompressed=%d compressed=%d deduped=%d",
+			log.Printf("progress: modules=%d err410=%d errOther=%d uncompressed=%d compressed=%d deduped=%d\n",
 				atomic.LoadUint64(&counters.modules),
 				atomic.LoadUint64(&counters.err410),
 				atomic.LoadUint64(&counters.errOther),
