@@ -38,6 +38,9 @@ type Counters struct {
 	bytesUncompressed uint64
 	bytesCompressed   uint64
 	bytesDeduped      uint64
+
+	filesTotal   uint64
+	filesDeduped uint64
 }
 
 func main() {
@@ -66,13 +69,15 @@ func main() {
 	log.Println("starting...")
 	go func() {
 		for range time.NewTicker(time.Minute).C {
-			log.Printf("progress: modules=%d err410=%d errOther=%d uncompressed=%d compressed=%d deduped=%d\n",
+			log.Printf("progress: modules=%d err410=%d errOther=%d uncompressed=%d compressed=%d deduped=%d files=%d unique=%d\n",
 				atomic.LoadUint64(&counters.modules),
 				atomic.LoadUint64(&counters.err410),
 				atomic.LoadUint64(&counters.errOther),
 				atomic.LoadUint64(&counters.bytesUncompressed),
 				atomic.LoadUint64(&counters.bytesCompressed),
 				atomic.LoadUint64(&counters.bytesDeduped),
+				atomic.LoadUint64(&counters.filesTotal),
+				atomic.LoadUint64(&counters.filesDeduped),
 			)
 		}
 	}()
