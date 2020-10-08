@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -25,8 +26,8 @@ func NewStore(baseDir string) *Store {
 	return s
 }
 
-func (s *Store) Add(counters *Counters, rfpath string, b []byte) error {
-	sum := sha256.Sum256(b)
+func (s *Store) Add(counters *Counters, rfpath string, buf *bytes.Buffer) error {
+	sum := sha256.Sum256(buf.Bytes())
 	cspath := filepath.Join(s.content, hex.EncodeToString(sum[:]))
 
 	_, err := os.Stat(cspath)
@@ -37,11 +38,11 @@ func (s *Store) Add(counters *Counters, rfpath string, b []byte) error {
 		if err != nil {
 			return fmt.Errorf("store.Add create %s: %w", cspath, err)
 		}
-		_, err = f.Write(b)
+		_, err = buf.WriteTo(f)
 		if err != nil {
 			return fmt.Errorf("store.Add write %s: %w", cspath, err)
 		}
-		atomic.AddUint64(&counters.bytesDeduped, uint64(len(b)))
+		atomic.AddUint64(&counters.bytesDeduped, uint64(buf.Len()))
 		atomic.AddUint64(&counters.filesDeduped, 1)
 	case err != nil:
 		return fmt.Errorf("store.Add stat %s: %w", cspath, err)

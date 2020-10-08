@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -42,6 +43,15 @@ type Counters struct {
 	filesTotal   uint64
 	filesDeduped uint64
 }
+
+var (
+	pool *sync.Pool = &sync.Pool{
+		New: func() interface{} {
+			buf := bytes.NewBuffer(make([]byte, 1<<30))
+			return &buf
+		},
+	}
+)
 
 func main() {
 	var baseDir string
@@ -172,18 +182,25 @@ func download(ctx context.Context, s *Store, ir IndexRecord, counters *Counters)
 		log.Println("download ", res.StatusCode, res.Status, zipURL)
 		return
 	}
-	b, err := ioutil.ReadAll(res.Body)
+
+	zipbuf := pool.Get().(*bytes.Buffer)
+	zipbuf.Reset()
+	defer pool.Put(zipbuf)
+
+	_, err = zipbuf.ReadFrom(res.Body)
 	if err != nil {
 		log.Println("read ", zipURL, err)
 		return
 	}
-	br := bytes.NewReader(b)
-	zr, err := zip.NewReader(br, int64(len(b)))
+	br := bytes.NewReader(zipbuf.Bytes())
+	zr, err := zip.NewReader(br, int64(zipbuf.Len()))
 	if err != nil {
 		log.Println("zipreader ", zipURL, err)
 		return
 	}
 
+	filebuf := pool.Get().(*bytes.Buffer)
+	defer pool.Put(filebuf)
 	for _, zf := range zr.File {
 		bytesCompressed += zf.CompressedSize64
 		bytesUncompressed += zf.UncompressedSize64
@@ -194,13 +211,14 @@ func download(ctx context.Context, s *Store, ir IndexRecord, counters *Counters)
 			continue
 		}
 
-		b, err := ioutil.ReadAll(rc)
+		filebuf.Reset()
+		_, err = filebuf.ReadFrom(rc)
 		rc.Close()
 		if err != nil {
 			log.Println("read zipfile ", zipURL, zf.Name, err)
 			continue
 		}
-		err = s.Add(counters, zf.Name, b)
+		err = s.Add(counters, zf.Name, filebuf)
 		if err != nil {
 			log.Println("write zipfile ", zipURL, zf.Name, err)
 			continue
