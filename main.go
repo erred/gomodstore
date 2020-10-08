@@ -47,8 +47,7 @@ type Counters struct {
 var (
 	pool *sync.Pool = &sync.Pool{
 		New: func() interface{} {
-			buf := bytes.NewBuffer(make([]byte, 1<<30))
-			return &buf
+			return bytes.NewBuffer(make([]byte, 1<<30))
 		},
 	}
 )
